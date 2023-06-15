@@ -42,6 +42,7 @@ namespace FPProject.Manager
         private void OnMove(InputAction.CallbackContext context)
         {
             Move = context.ReadValue<Vector2>();
+            Move.Normalize();
         }
         
         private void OnLook(InputAction.CallbackContext context)

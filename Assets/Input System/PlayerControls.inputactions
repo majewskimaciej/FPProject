@@ -39,7 +39,7 @@
                     "id": "37c67550-fd4a-4019-aceb-bc976e09d502",
                     "path": "2DVector",
                     "interactions": "",
-                    "processors": "",
+                    "processors": "NormalizeVector2",
                     "groups": "",
                     "action": "Move",
                     "isComposite": true,
