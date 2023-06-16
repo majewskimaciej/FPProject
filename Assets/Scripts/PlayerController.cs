@@ -25,6 +25,7 @@ namespace FPProject.PlayerControl
         private int _yVelHash;
         private float _xRotation;
         private float _yRotation;
+        private bool _isRunning;
 
         private const float WalkSpeed = 5f;
         private const float RunSpeed = 9f;
@@ -44,48 +45,61 @@ namespace FPProject.PlayerControl
         {
             if (CanMove)
             {
-                Move();
+                HandleMove();
             }
         }
 
         private void LateUpdate()
         {
-            CamMovement();
+            HandleLook();
         }
 
-        private void Move()
+        private void HandleMove()
         {
             if (!_hasAnimator) 
                 return;
 
-            var targetSpeed = _inputManager.Run && CanRun ? RunSpeed : WalkSpeed;
+            float targetSpeed;
+
+            if (_inputManager.Run && CanRun)
+            {
+                targetSpeed = RunSpeed;
+                _isRunning = true;
+            }
+            else
+            {
+                targetSpeed = WalkSpeed;
+                _isRunning = false;
+            }
+            
+            _animator.SetBool("isRunning", _isRunning);
 
             if (_inputManager.Move == Vector2.zero)
                 targetSpeed = 0;
 
             currentVelocity.x = 
-                Mathf.Lerp(currentVelocity.x, _inputManager.Move.x * targetSpeed, animationBlendSpeed * Time.deltaTime);
+                Mathf.Lerp(currentVelocity.x, _inputManager.Move.x * targetSpeed, animationBlendSpeed * Time.fixedDeltaTime);
             currentVelocity.y =
-                Mathf.Lerp(currentVelocity.y, _inputManager.Move.y * targetSpeed, animationBlendSpeed * Time.deltaTime);
+                Mathf.Lerp(currentVelocity.y, _inputManager.Move.y * targetSpeed, animationBlendSpeed * Time.fixedDeltaTime);
 
             var xVelDifference = currentVelocity.x - _playerRigidbody.velocity.x;
             var zVelDifference = currentVelocity.y - _playerRigidbody.velocity.z;
             
-            _playerRigidbody.MoveRotation(Quaternion.Euler(0, _yRotation, 0));
             _playerRigidbody.AddForce(transform.TransformVector(new Vector3(xVelDifference, 0, zVelDifference)), ForceMode.VelocityChange);
+            _playerRigidbody.MoveRotation(Quaternion.Euler(0, _yRotation, 0));
 
             _animator.SetFloat(_xVelHash, currentVelocity.x);
             _animator.SetFloat(_yVelHash, currentVelocity.y);
         }
 
-        private void CamMovement()
+        private void HandleLook()
         {
             if (!_hasAnimator) 
                 return;
             
             var mouseX = _inputManager.Look.x;
             var mouseY = _inputManager.Look.y;
-            playerCamera.transform.position = cameraRoot.position;
+            playerCamera.position = cameraRoot.position;
 
             _xRotation -= mouseY * mouseSensitivity;
             _xRotation = Mathf.Clamp(_xRotation, -upperLimit, lowerLimit);
