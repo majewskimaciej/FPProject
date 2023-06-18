@@ -798,7 +798,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerInput: {fileID: 1307303743059999422}
-  Move: {x: 0, y: 0}
 --- !u!1 &1153471862349467696
 GameObject:
   m_ObjectHideFlags: 0
@@ -3293,8 +3292,11 @@ MonoBehaviour:
   upperLimit: 90
   lowerLimit: 80
   mouseSensitivity: 21.9
-  cameraOffset: {x: 0, y: 0, z: 0}
-  currentVelocity: {x: 0, y: 0}
+  jumpFactor: 300
+  groundedDistance: 0.9
+  groundCheck:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &8924553675232518330
 GameObject:
   m_ObjectHideFlags: 0
