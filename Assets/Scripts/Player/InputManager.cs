@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Interactions;
 
-namespace FPProject.Manager
+namespace FPProject.Player
 {
     public class InputManager : MonoBehaviour
     {
@@ -64,6 +64,16 @@ namespace FPProject.Manager
         private void OnJump(InputAction.CallbackContext context)
         {
             Jump = context.ReadValueAsButton();
+        }
+
+        public void DisableMovement()
+        {
+            playerInput.actions.FindAction("Move").Disable();
+        }
+        
+        public void EnableMovement()
+        {
+            playerInput.actions.FindAction("Move").Enable();
         }
 
         private void OnEnable()

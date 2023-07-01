@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: be7045538fbf96b4aa5178e62edf5d28
+guid: f02d6cef5875bb841b7464f4bbb30bf3
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
@@ -528,23 +528,23 @@ ModelImporter:
         length: 0
         modified: 0
     skeleton:
-    - name: X Bot@T-Pose (1)(Clone)
+    - name: Player(Clone)
       parentName: 
       position: {x: 0, y: 0, z: 0}
       rotation: {x: 0, y: 0, z: 0, w: 1}
       scale: {x: 1, y: 1, z: 1}
     - name: Beta_Surface
-      parentName: X Bot@T-Pose (1)(Clone)
+      parentName: Player(Clone)
       position: {x: -0, y: 0, z: 0}
       rotation: {x: 0, y: -0, z: -0, w: 1}
       scale: {x: 1, y: 1, z: 1}
     - name: Beta_Joints
-      parentName: X Bot@T-Pose (1)(Clone)
+      parentName: Player(Clone)
       position: {x: -0, y: 0, z: 0}
       rotation: {x: 0, y: -0, z: -0, w: 1}
       scale: {x: 1, y: 1, z: 1}
     - name: mixamorig:Hips
-      parentName: X Bot@T-Pose (1)(Clone)
+      parentName: Player(Clone)
       position: {x: -0.00000006394334, y: 1.0427046, z: 0.01554256}
       rotation: {x: 0.006458546, y: -0.000000017584803, z: 0.0000007343956, w: 0.99997914}
       scale: {x: 1, y: 1, z: 1}
@@ -880,7 +880,7 @@ ModelImporter:
     hasTranslationDoF: 0
     hasExtraRoot: 1
     skeletonHasParents: 1
-  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: 7675ef9dfbbfe944b94ec7b459590411, type: 3}
+  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: 42f0eb36f500c3745a85413d4b37cac7, type: 3}
   autoGenerateAvatarMappingIfUnspecified: 1
   animationType: 3
   humanoidOversampling: 1
