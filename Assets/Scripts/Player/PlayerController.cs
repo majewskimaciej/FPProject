@@ -1,27 +1,25 @@
-using System;
-using FPProject.Player;
 using UnityEngine;
 
-namespace FPProject.Player
+namespace Player
 {
     public class PlayerController : MonoBehaviour
     {
         private bool ShouldRun => _inputManager.Move == Vector2.up;
-        
+
         [SerializeField] private bool canMove = true;
-        [SerializeField] private bool canLook= true;
-        [SerializeField] private bool canRun= true;
+        [SerializeField] private bool canLook = true;
+        [SerializeField] private bool canRun = true;
         [SerializeField] private float animationBlendSpeed = 8.9f;
         [SerializeField] private Transform cameraRoot;
         [SerializeField] private Transform playerCamera;
-        
-        [Header("Look Parameters")]
+
+        [Header("Look Parameters")] 
         [SerializeField] private float upperLimit = 90f;
         [SerializeField] private float lowerLimit = 80f;
         [SerializeField] private float horizontalLimit = 45f;
         [SerializeField] private float mouseSensitivity = 21.9f;
 
-        [Header("Jump Parameters")]
+        [Header("Jump Parameters")] 
         [SerializeField] private float jumpFactor = 260f;
         [SerializeField] private float groundedDistance = 0.8f;
         [SerializeField] private LayerMask groundCheck;
@@ -38,14 +36,14 @@ namespace FPProject.Player
         private int _jumpHash;
         private int _groundHash;
         private int _fallingHash;
-        
+
         private float _xRotation;
         private float _yRotation;
         private float _yRotationLastGrounded;
         private bool _isGrounded;
 
         private Vector2 _currentVelocity;
-        
+
         private const float WalkSpeed = 5f;
         private const float RunSpeed = 9f;
 
@@ -82,7 +80,7 @@ namespace FPProject.Player
 
         private void HandleMove()
         {
-            if (!_hasAnimator) 
+            if (!_hasAnimator)
                 return;
 
             if (_isGrounded)
@@ -101,8 +99,9 @@ namespace FPProject.Player
 
         private void ApplyForcesWhileGrounded()
         {
-            var targetSpeed = _inputManager.Run && canRun && ShouldRun ? RunSpeed : _inputManager.Move == Vector2.zero ? 0 : WalkSpeed;
-            
+            var targetSpeed = _inputManager.Run && canRun && ShouldRun ? RunSpeed :
+                _inputManager.Move == Vector2.zero ? 0 : WalkSpeed;
+
             _currentVelocity.x =
                 Mathf.Lerp(_currentVelocity.x, _inputManager.Move.x * targetSpeed,
                     animationBlendSpeed * Time.fixedDeltaTime);
@@ -129,22 +128,22 @@ namespace FPProject.Player
 
         private void HandleLook()
         {
-            if (!_hasAnimator) 
+            if (!_hasAnimator)
                 return;
-            
+
             playerCamera.position = cameraRoot.position;
 
             _xRotation -= _inputManager.Look.y * mouseSensitivity;
             _xRotation = Mathf.Clamp(_xRotation, -upperLimit, lowerLimit);
-            
+
             _yRotation = Mathf.Repeat((_yRotation + _inputManager.Look.x * mouseSensitivity), 360);
-            
+
             if (!_isGrounded)
             {
-                _yRotation = CustomClamp(_yRotation, _yRotationLastGrounded, horizontalLimit);
+                _yRotation = Helper.CustomClamp.Clamp(_yRotation, _yRotationLastGrounded, horizontalLimit);
             }
-            
-            playerCamera.eulerAngles = new Vector3(_xRotation, _yRotation, 0);
+
+            playerCamera.localRotation = Quaternion.Euler(_xRotation, _yRotation, 0);
         }
 
         private void HandleJump()
@@ -155,7 +154,7 @@ namespace FPProject.Player
                 return;
             if (!_isGrounded)
                 return;
-            
+
             _animator.SetTrigger(_jumpHash);
         }
 
@@ -163,9 +162,8 @@ namespace FPProject.Player
         {
             if (!_hasAnimator)
                 return;
-
-            RaycastHit hitInfo;
-            if (Physics.Raycast(_playerRigidbody.worldCenterOfMass, Vector3.down, out hitInfo, groundedDistance + 0.1f,
+            
+            if (Physics.Raycast(_playerRigidbody.worldCenterOfMass, Vector3.down, groundedDistance + 0.1f,
                     groundCheck))
             {
                 _isGrounded = true;
@@ -184,71 +182,12 @@ namespace FPProject.Player
             _animator.SetBool(_fallingHash, !_isGrounded);
             _animator.SetBool(_groundHash, _isGrounded);
         }
-        
+
         public void JumpAddForce()
         {
             _playerRigidbody.AddForce(-_playerRigidbody.velocity.y * Vector3.up, ForceMode.VelocityChange);
             _playerRigidbody.AddForce(Vector3.up * jumpFactor, ForceMode.Impulse);
             _animator.ResetTrigger(_jumpHash);
-        }
-
-        private static float CustomClamp(float currentDegrees, float jumpStartDegrees, float limit)
-        {
-            if (jumpStartDegrees - limit < 0)
-            {
-                var lBarrierEdge = 360 + jumpStartDegrees - limit;
-                var rBarrierEdge = jumpStartDegrees + limit;
-                var center = (lBarrierEdge + rBarrierEdge) / 2;
-                
-                if (currentDegrees <= rBarrierEdge || currentDegrees >= lBarrierEdge)
-                {
-                    return currentDegrees;
-                }
-                if (currentDegrees < lBarrierEdge && currentDegrees > center)
-                {
-                    return lBarrierEdge;
-                }
-                if (currentDegrees > rBarrierEdge && currentDegrees < center)
-                {
-                    return rBarrierEdge;
-                }
-            }
-            
-            if (jumpStartDegrees + limit > 360)
-            {
-                var lBarrierEdge = jumpStartDegrees - limit;
-                var rBarrierEdge = jumpStartDegrees + limit - 360;
-                var center = (lBarrierEdge + rBarrierEdge) / 2;
-                if (currentDegrees <= rBarrierEdge || currentDegrees >= lBarrierEdge)
-                {
-                    return currentDegrees;
-                }
-                if (currentDegrees < lBarrierEdge && currentDegrees > center)
-                {
-                    return lBarrierEdge;
-                }
-                if (currentDegrees > rBarrierEdge && currentDegrees < center)
-                {
-                    return rBarrierEdge;
-                }
-            }
-
-            var lBarrier = jumpStartDegrees - limit;
-            var rBarrier = jumpStartDegrees + limit;
-            if (currentDegrees <= rBarrier && currentDegrees >= lBarrier)
-            {
-                return currentDegrees;
-            }
-            if (currentDegrees < lBarrier)
-            {
-                return lBarrier;
-            }
-            if (currentDegrees > rBarrier)
-            {
-                return rBarrier;
-            }
-
-            return currentDegrees;
         }
     }
 }
