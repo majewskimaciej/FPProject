@@ -4,8 +4,8 @@ namespace Player
 {
     public class PlayerController : MonoBehaviour
     {
-        private bool ShouldRun => _inputManager.Move == Vector2.up;
-
+        private bool shouldRun => _inputManager.Move == Vector2.up;
+        
         [SerializeField] private bool canMove = true;
         [SerializeField] private bool canLook = true;
         [SerializeField] private bool canRun = true;
@@ -28,10 +28,12 @@ namespace Player
         private Rigidbody _playerRigidbody;
         private InputManager _inputManager;
         private Animator _animator;
+        private PlayerState _playerState;
         private bool _hasAnimator;
         private int _xVelHash;
         private int _yVelHash;
         private int _zVelHash;
+        private int _moveHash;
         private int _runHash;
         private int _jumpHash;
         private int _groundHash;
@@ -57,19 +59,18 @@ namespace Player
             _yVelHash = Animator.StringToHash("Y_Velocity");
             _zVelHash = Animator.StringToHash("Z_Velocity");
             _jumpHash = Animator.StringToHash("Jump");
+            _moveHash = Animator.StringToHash("isMoving");
+            _runHash = Animator.StringToHash("isRunning");
             _groundHash = Animator.StringToHash("isGrounded");
             _fallingHash = Animator.StringToHash("isFalling");
-            _runHash = Animator.StringToHash("isRunning");
         }
 
         private void FixedUpdate()
         {
             SampleGround();
-            if (canMove)
-            {
-                HandleMove();
-                HandleJump();
-            }
+            SetState();
+            HandleStates();
+            HandleJump();
         }
 
         private void LateUpdate()
@@ -77,37 +78,66 @@ namespace Player
             if (canLook)
                 HandleLook();
         }
+        
+        private void SetState()
+        {
+            if (_inputManager.Move != Vector2.zero && canMove)
+            {
+                _playerState = PlayerState.Moving;
+            }
+            else
+            {
+                _playerState = PlayerState.Idle;
+            }
 
-        private void HandleMove()
+            if (_inputManager.Run && canRun && shouldRun)
+            {
+                _playerState = PlayerState.Running;
+            }
+
+            if (!_isGrounded)
+            {
+                _playerState = PlayerState.Falling;
+            }
+        }
+
+        private void HandleStates()
         {
             if (!_hasAnimator)
                 return;
 
-            if (_isGrounded)
+            var targetSpeed = GetTargetSpeed();
+            
+            switch (_playerState)
             {
-                ApplyForcesWhileGrounded();
+                case PlayerState.Idle:
+                    HandleIdle();
+                    break;
+                case PlayerState.Moving:
+                    HandleMove(targetSpeed);
+                    break;
+                case PlayerState.Running:
+                    HandleMove(targetSpeed);
+                    break;
+                case PlayerState.Falling:
+                    HandleFall(targetSpeed);
+                    break;
             }
-            else
-            {
-                ApplyForcesWhileNotGrounded();
-            }
-
+            
             _animator.SetFloat(_xVelHash, _currentVelocity.x);
             _animator.SetFloat(_yVelHash, _currentVelocity.y);
-            _animator.SetBool(_runHash, _inputManager.Run && ShouldRun);
+            _animator.SetBool(_runHash, _playerState == PlayerState.Running);
+            _animator.SetBool(_moveHash, _playerState == PlayerState.Moving);
         }
-
-        private void ApplyForcesWhileGrounded()
+        
+        private void HandleIdle()
         {
-            var targetSpeed = _inputManager.Run && canRun && ShouldRun ? RunSpeed :
-                _inputManager.Move == Vector2.zero ? 0 : WalkSpeed;
-
-            _currentVelocity.x =
-                Mathf.Lerp(_currentVelocity.x, _inputManager.Move.x * targetSpeed,
-                    animationBlendSpeed * Time.fixedDeltaTime);
-            _currentVelocity.y =
-                Mathf.Lerp(_currentVelocity.y, _inputManager.Move.y * targetSpeed,
-                    animationBlendSpeed * Time.fixedDeltaTime);
+            RotatePlayer();
+        }
+        
+        private void HandleMove(float targetSpeed)
+        {
+            GetCurrentVelocity(targetSpeed);
 
             var playerVelocity = _playerRigidbody.velocity;
 
@@ -116,16 +146,18 @@ namespace Player
 
             _playerRigidbody.AddForce(transform.TransformVector(new Vector3(xVelDifference, 0, zVelDifference)),
                 ForceMode.VelocityChange);
-            _playerRigidbody.MoveRotation(Quaternion.Euler(0, _yRotation, 0));
+            RotatePlayer();
         }
-
-        private void ApplyForcesWhileNotGrounded()
+        
+        private void HandleFall(float targetSpeed)
         {
+            GetCurrentVelocity(targetSpeed);
+            
             _playerRigidbody.AddForce(
                 transform.TransformVector(new Vector3(_currentVelocity.x * airResistance, 0,
                     _currentVelocity.y * airResistance)), ForceMode.VelocityChange);
         }
-
+        
         private void HandleLook()
         {
             if (!_hasAnimator)
@@ -145,7 +177,7 @@ namespace Player
 
             playerCamera.localRotation = Quaternion.Euler(_xRotation, _yRotation, 0);
         }
-
+        
         private void HandleJump()
         {
             if (!_hasAnimator)
@@ -157,7 +189,7 @@ namespace Player
 
             _animator.SetTrigger(_jumpHash);
         }
-
+        
         private void SampleGround()
         {
             if (!_hasAnimator)
@@ -175,6 +207,27 @@ namespace Player
             _isGrounded = false;
             _animator.SetFloat(_zVelHash, _playerRigidbody.velocity.y);
             SetGroundedAnimationState();
+        }
+        
+        private void RotatePlayer()
+        {
+            _playerRigidbody.MoveRotation(Quaternion.Euler(0, _yRotation, 0));
+        }
+        
+        private float GetTargetSpeed()
+        {
+            return _playerState == PlayerState.Running ? RunSpeed :
+                _playerState == PlayerState.Idle ? 0 : WalkSpeed;;
+        }
+
+        private void GetCurrentVelocity(float targetSpeed)
+        {
+            _currentVelocity.x =
+                Mathf.Lerp(_currentVelocity.x, _inputManager.Move.x * targetSpeed,
+                    animationBlendSpeed * Time.fixedDeltaTime);
+            _currentVelocity.y =
+                Mathf.Lerp(_currentVelocity.y, _inputManager.Move.y * targetSpeed,
+                    animationBlendSpeed * Time.fixedDeltaTime);
         }
 
         private void SetGroundedAnimationState()
